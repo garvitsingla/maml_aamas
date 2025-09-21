@@ -57,20 +57,20 @@ ACTION_OBJ_DOOR_MISSIONS = (
 )
 
 
-room_size=9
-num_dists=20
+room_size=6
+num_dists=6
 max_steps=300
 num_rows=2
 num_cols=2
 
-model = "PickupDist_7_1"  
+model = "GoToLocal_7_2_300"  
 
 
-# # GoToLocal
-# base_env = GoToLocalMissionEnv(room_size=room_size, num_dists=num_dists, max_steps=max_steps)
-# missions=LOCAL_MISSIONS
-# env = BabyAIMissionTaskWrapper(base_env, missions=missions)
-# print(f"room_size: {room_size}\n num_dists: {num_dists}\n max_steps: {max_steps}\n available missions: {LOCAL_MISSIONS}\n ")
+# GoToLocal
+base_env = GoToLocalMissionEnv(room_size=room_size, num_dists=num_dists, max_steps=max_steps)
+missions=LOCAL_MISSIONS
+env = BabyAIMissionTaskWrapper(base_env, missions=missions)
+print(f"room_size: {room_size}\n num_dists: {num_dists}\n max_steps: {max_steps}\n available missions: {LOCAL_MISSIONS}\n ")
 
 
 # # Pickup
@@ -89,11 +89,11 @@ model = "PickupDist_7_1"
 
 
 
-# GoToOpen
-base_env = GoToOpenMissionEnv(room_size=room_size, num_rows=num_rows, num_cols=num_cols, num_dists=num_dists, max_steps=max_steps)
-missions=LOCAL_MISSIONS
-env = BabyAIMissionTaskWrapper(base_env, missions=missions)
-print(f"room_size: {room_size} \nnum_dists: {num_dists} \nmax_steps: {max_steps} \nnum_rows: {num_rows} \nnum_cols: {num_cols}")
+# # GoToOpen
+# base_env = GoToOpenMissionEnv(room_size=room_size, num_rows=num_rows, num_cols=num_cols, num_dists=num_dists, max_steps=max_steps)
+# missions=LOCAL_MISSIONS
+# env = BabyAIMissionTaskWrapper(base_env, missions=missions)
+# print(f"room_size: {room_size} \nnum_dists: {num_dists} \nmax_steps: {max_steps} \nnum_rows: {num_rows} \nnum_cols: {num_cols}")
 
 
 
@@ -204,7 +204,7 @@ policy_maml = CategoricalMLPPolicy(
     ).to(device)
 
 # restore save maml policy
-policy_maml.load_state_dict(torch.load(f"inner_loop_model/inner_loop_{model}.pth", map_location=device))
+policy_maml.load_state_dict(torch.load(f"maml_model/maml_{model}.pth", map_location=device))
 policy_maml.eval()
 
 
@@ -295,7 +295,7 @@ N_MISSIONS = 20
 N_EPISODES = 40
 
 results_lang = []
-results_inner_loop = []
+results_maml = []
 results_random = []
 
 print("Comparing language-adapted policy and random policy on random missions:")
@@ -319,7 +319,7 @@ for i in range(N_MISSIONS):
 
 
     # 2. MAML policy
-    print(" [Evaluating with inner-loop adaptation]")
+    print(" [Evaluating with maml adaptation]")
     maml_params = adapt_policy_for_task(mission, policy_maml, num_steps=2, fast_lr=0.25, batch_size=10, baseline=baseline)
     maml_steps = []
 
@@ -329,7 +329,7 @@ for i in range(N_MISSIONS):
         maml_steps.append(steps)
     mean_maml = np.mean(maml_steps)
     std_maml = np.std(maml_steps)
-    results_inner_loop.append(mean_maml)
+    results_maml.append(mean_maml)
     print(f"    --> Avg steps: {mean_maml:.2f} ± {std_maml:.2f}")
 
 
@@ -360,5 +360,5 @@ print(f"Execution time: {(end_time - start_time)/60} minutes")
 # Results
 print("\n===== FINAL AGGREGATE RESULTS =====")
 print(f"Lang-adapted policy: {np.mean(results_lang):.2f} ± {np.std(results_lang):.2f}")
-print(f"MAML policy:   {np.mean(results_inner_loop):.2f} ± {np.std(results_inner_loop):.2f}")
+print(f"MAML policy:   {np.mean(results_maml):.2f} ± {np.std(results_maml):.2f}")
 print(f"Random initializations:  {np.mean(results_random):.2f} ± {np.std(results_random):.2f}")

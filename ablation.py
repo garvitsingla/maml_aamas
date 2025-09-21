@@ -190,7 +190,7 @@ N_EPISODES = 40
 
 results_lang = []
 results_lang_unadapted = []
-results_inner_loop = []
+results_maml = []
 results_random = []
 
 print("Comparing language-adapted policy and random policy on random missions:")
